@@ -112,9 +112,11 @@ module Sinatra
                :format => 'JSON',
                :v => '1.0',
                :session_key => method == 'photos.upload' ? nil : params[:session_key],
-               :method => method }.merge(opts).reject{|_,v| v.nil? }
+               :method => method }.merge(opts)
 
       args = opts.map{ |k,v|
+                       next nil unless v
+
                        "#{k}=" + case v
                                  when Hash
                                    v.to_json
@@ -127,14 +129,18 @@ module Sinatra
                                  else
                                    v.to_s
                                  end
-                     }.sort
+                     }.compact.sort
 
       sig = Digest::MD5.hexdigest(args.join+self.secret)
 
       if method == 'photos.upload'
         data = MimeBoundary
         data += opts.merge(:sig => sig).inject('') do |buf, (key, val)|
-          buf << (MimePart % [key, val])
+          if val
+            buf << (MimePart % [key, val])
+          else
+            buf
+          end
         end
         data += MimeImage % ['upload.jpg', 'jpg', image.respond_to?(:read) ? image.read : image]
       else
