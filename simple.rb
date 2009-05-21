@@ -31,7 +31,7 @@ module Sinatra
       "http://apps.facebook.com/add.php?api_key=#{self.api_key}"
     end
 
-    def authenticate!
+    def require_login!
       if valid?
         redirect addurl unless params[:user]
       else
@@ -260,6 +260,7 @@ module Sinatra
     def self.registered app
       app.helpers FacebookHelper
       app.before(&method(:fix_request_method))
+      app.disable :sessions
     end
 
     def self.fix_request_method app
@@ -292,12 +293,18 @@ get '/' do
 end
 
 get '/hi' do
-  "Hi. API key: #{fb.api_key}. <a href='#{facebook.url('/test')}'>Click here</a>"
+  "Hi, <a href='#{facebook.url('/test')}'>Click here</a>"
 end
 
 get '/login' do
-  fb.authenticate!
-  'hi der'
+  fb.require_login!
+  info = fb.users.getInfo(:uids => fb[:user], :fields => [:name,:pic_square]).first
+  "Hi #{info['name']}, you look like this: <img src='#{info['pic_square']}'/>"
+end
+
+get '/basic' do
+  info = fb.users.getInfo(:uids => fb[:canvas_user], :fields => [:name,:pic_square]).first
+  "Hi #{info['name']}, you look like this: <img src='#{info['pic_square']}'/>"
 end
 
 get '/test' do
