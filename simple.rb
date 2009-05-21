@@ -253,10 +253,17 @@ module Sinatra
 
     def self.registered app
       app.helpers FacebookHelper
+      app.before(&method(:fix_request_method))
+    end
+
+    def self.fix_request_method app
+      if method = app.request.params['fb_sig_request_method']
+        app.request.env['REQUEST_METHOD'] = method
+      end
     end
   end
 
-  register Facebook
+  Application.register Facebook
 end
 
 facebook do
@@ -265,13 +272,6 @@ facebook do
   app_id 81747826609
   url 'http://apps.facebook.com/sinatrafacebook'
   callback 'http://media.tmm1.net:4567'
-end
-
-before do
-  # if method = params['fb_sig_request_method']
-  if method = fb.params[:request_method]
-    request.env['REQUEST_METHOD'] = method
-  end
 end
 
 get '/blah' do
