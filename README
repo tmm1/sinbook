@@ -1,0 +1,86 @@
+sinbook: simple sinatra facebook extension in 300 lines of ruby
+  (c) 2009 Aman Gupta (tmm1)
+
+=== Usage
+
+  require 'sinbook'
+  require 'sinatra'
+
+  facebook do
+    api_key  '4579...cbb0'
+    secret   '5106...2342'
+    app_id   81747826609
+    url      'http://apps.facebook.com/myappname'
+    callback 'http://myappserver.com'
+  end
+
+  get '/' do
+    fb.require_login!
+    "Hi <fb:name uid=#{fb[:user]} useyou=false />!"
+  end
+
+
+=== Features
+
+  sinbook provides a simple `facebook` helper (also aliased to `fb`).
+
+    >> fb.valid?
+    => true                              # valid (authenticated) request from facebook's servers
+
+    >> pp fb.params
+    {
+      :logged_out_facebook => false,     # request came from a user logged into facebook
+      :added => true,                    # user is logged into our app
+      :user => 1234,                     # user's facebook uid
+      :friends => [1,2,3],               # list of user's friends
+      ...
+    }
+
+    >> fb[:user]                         # [] is aliased to params[]
+    => 1234
+
+    >> fb.callback
+    => 'http://apps.facebook.com/myappname'
+
+    >> fb.callback('/homepage')
+    => 'http://apps.facebook.com/myappname/homepage'
+
+    >> fb.url('/images/static.gif')
+    => 'http://myappserver.com/images/static.gif'
+
+    >> fb.appurl
+    => 'http://apps.facebook.com/add.php?api_key=4579...cbb0'
+
+    >> fb.addurl
+    => 'http://www.facebook.com/apps/application.php?id=81747826609'
+
+    >> fb.redirect('/welcome')           # redirect using an fb:redirect tag
+
+    >> fb.require_login!                 # redirect to addurl page unless logged in
+
+
+  The helper can also be used to make API calls
+
+    >> fb.users.getInfo :uid => 1234, :fields => [:name]
+    => [{'uid' => 1234, 'name' => 'Frank Sinatra'}]
+
+    >> fb.groups.get :uid => 1234
+    => [{'name' => 'Sinatra Users'}]
+
+    >> fb.profile.setFBML :profile => 'hello world'
+    => true
+
+    >> fb.profile.getFBML
+    => 'hello world'
+
+
+=== TODO
+
+  * Switch to yajl-ruby for json parsing
+  * Split out facebook api client so it can be used outside sinatra
+  * Add a batch mode for api calls:
+
+      groups, pics = fb.batch do |b|
+        b.groups.get :uid => 123
+        b.users.getInfo :uids => 123, :fields => [:pic_square]
+      end

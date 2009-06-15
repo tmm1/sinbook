@@ -1,5 +1,9 @@
-require 'rubygems'
-require 'sinatra'
+begin
+  require 'sinatra/base'
+rescue LoadError
+  retry if require 'rubygems'
+  raise
+end
 
 module Sinatra
   require 'digest/md5'
@@ -16,8 +20,12 @@ module Sinatra
       @callback = app.options.facebook_callback
     end
     attr_reader :app
-    attr_accessor :api_key, :secret, :app_id
-    attr_writer :url, :callback
+    attr_accessor :api_key, :secret
+    attr_writer :url, :callback, :app_id
+
+    def app_id
+      @app_id || self[:app_id]
+    end
 
     def url postfix=nil
       postfix ? "#{@url}#{postfix}" : @url
@@ -31,11 +39,15 @@ module Sinatra
       "http://apps.facebook.com/add.php?api_key=#{self.api_key}"
     end
 
+    def appurl
+      "http://www.facebook.com/apps/application.php?id=#{self.app_id}"
+    end
+
     def require_login!
       if valid?
         redirect addurl unless params[:user]
       else
-        app.redirect_to url
+        app.redirect url
       end
     end
 
@@ -62,7 +74,7 @@ module Sinatra
             h[k] = v>0 ? Time.at(v) : v
           when 'user', 'app_id', 'canvas_user'
             h[k] = v.to_i
-          when /^(position_|in_|is_|added)/
+          when /^(logged_out|position_|in_|is_|added)/
             h[k] = v=='1'
           else
             h[k] = v
@@ -82,8 +94,36 @@ module Sinatra
     end
 
     class APIProxy
+      Types = %w[
+        admin
+        application
+        auth
+        batch
+        comments
+        data
+        events
+        fbml
+        feed
+        fql
+        friends
+        groups
+        links
+        liveMessage
+        notes
+        notifications
+        pages
+        photos
+        profile
+        status
+        stream
+        users
+        video
+      ]
+
       alias :__class__ :class
+      alias :__inspect__ :inspect
       instance_methods.each { |m| undef_method m unless m =~ /^__/ }
+      alias :inspect :__inspect__
 
       def initialize name, obj
         @name, @obj = name, obj
@@ -94,7 +134,7 @@ module Sinatra
       end
     end
 
-    %w[ admin auth fbml feed fql friends notifications profile users pages events groups photos marketplace ].each do |n|
+    APIProxy::Types.each do |n|
       class_eval %[
         def #{n}
           (@proxies||={})[:#{n}] ||= APIProxy.new(:#{n}, self)
@@ -111,7 +151,7 @@ module Sinatra
                :call_id => Time.now.to_f,
                :format => 'JSON',
                :v => '1.0',
-               :session_key => method == 'photos.upload' ? nil : params[:session_key],
+               :session_key => %w[ photos.upload ].include?(method) ? nil : params[:session_key],
                :method => method }.merge(opts)
 
       args = opts.map{ |k,v|
@@ -144,7 +184,7 @@ module Sinatra
         end
         data += MimeImage % ['upload.jpg', 'jpg', image.respond_to?(:read) ? image.read : image]
       else
-        data = Array["sig=#{sig}", *args].join('&')
+        data = Array["sig=#{sig}", *args.map{|a| a.gsub('&','%26') }].join('&')
       end
 
       ret = self.class.request(data, method == 'photos.upload')
@@ -271,47 +311,4 @@ module Sinatra
   end
 
   Application.register Facebook
-end
-
-facebook do
-  api_key '45796747415d12227f52146b4444cbb0'
-  secret '5106c7409f18d7618dd03433a2f72342'
-  app_id 81747826609
-  url 'http://apps.facebook.com/sinatrafacebook'
-  callback 'http://media.tmm1.net:4567'
-end
-
-get '/blah' do
-  # (0..10).to_a.map do
-  #   fb.users.getInfo(:uids => 15601088, :fields => [:name])
-  # end.inspect
-  fb.users.getInfo(:uids => 15601088, :fields => [:name]).inspect
-end
-
-get '/' do
-  fb.redirect '/hi'
-end
-
-get '/hi' do
-  "Hi, <a href='#{facebook.url('/test')}'>Click here</a>"
-end
-
-get '/login' do
-  fb.require_login!
-  info = fb.users.getInfo(:uids => fb[:user], :fields => [:name,:pic_square]).first
-  "Hi #{info['name']}, you look like this: <img src='#{info['pic_square']}'/>"
-end
-
-get '/basic' do
-  info = fb.users.getInfo(:uids => fb[:canvas_user], :fields => [:name,:pic_square]).first
-  "Hi #{info['name']}, you look like this: <img src='#{info['pic_square']}'/>"
-end
-
-get '/test' do
-  content_type 'text/plain'
-  [
-    fb.valid?,
-    fb.params,
-    fb[:user]
-  ].inspect
 end
