@@ -10,6 +10,7 @@ spec = Gem::Specification.new do |s|
   s.authors = ["Aman Gupta"]
   s.email = "aman@tmm1.net"
 
+  s.add_dependency('yajl-ruby')
   s.has_rdoc = false
 
   # ruby -rpp -e' pp `git ls-files | grep -v examples`.split("\n") '

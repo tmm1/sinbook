@@ -7,7 +7,7 @@ end
 
 module Sinatra
   require 'digest/md5'
-  require 'json'
+  require 'yajl'
 
   class FacebookObject
     def initialize app
@@ -159,10 +159,10 @@ module Sinatra
 
                        "#{k}=" + case v
                                  when Hash
-                                   v.to_json
+                                   Yajl::Encoder.encode(v)
                                  when Array
                                    if k == :tags
-                                     v.to_json
+                                     Yajl::Encoder.encode(v)
                                    else
                                      v.join(',')
                                    end
@@ -193,17 +193,10 @@ module Sinatra
               true
             elsif ['false', '0'].include? ret
               false
-            elsif ret[0..0] == '"'
-              ret[1..-2]
             elsif (n = Integer(ret) rescue nil)
               n
             else
-              begin
-                JSON.parse(ret)
-              rescue JSON::ParserError
-                puts "Error parsing #{ret.inspect}"
-                raise
-              end
+              Yajl::Parser.parse(ret)
             end
 
       raise Facebook::Error, ret['error_msg'] if ret.is_a? Hash and ret['error_code']

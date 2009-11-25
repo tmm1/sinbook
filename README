@@ -76,7 +76,6 @@ sinbook: simple sinatra facebook extension in 300 lines of ruby
 
 === TODO
 
-  * Switch to yajl-ruby for json parsing
   * Split out facebook api client so it can be used outside sinatra
   * Add a batch mode for api calls:
 
