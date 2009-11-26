@@ -60,27 +60,25 @@ module Sinatra
     def params
       return {} unless valid?
       app.env['facebook.params'] ||= \
-        app.params.inject({}) { |h,(k,v)|
-          next h unless k =~ /^fb_sig_(.+)$/
-          k = $1.to_sym
-
-          case $1
+        app.env['facebook.vars'].inject({}) do |h,(k,v)|
+          s = k.to_sym
+          case k
           when 'friends'
-            h[k] = v.split(',').map{|e|e.to_i}
+            h[s] = v.split(',').map{|e|e.to_i}
           when /time$/
-            h[k] = Time.at(v.to_f)
+            h[s] = Time.at(v.to_f)
           when 'expires'
             v = v.to_i
-            h[k] = v>0 ? Time.at(v) : v
+            h[s] = v>0 ? Time.at(v) : v
           when 'user', 'app_id', 'canvas_user'
-            h[k] = v.to_i
+            h[s] = v.to_i
           when /^(logged_out|position_|in_|is_|added)/
-            h[k] = v=='1'
+            h[s] = v=='1'
           else
-            h[k] = v
+            h[s] = v
           end
           h
-        }
+        end
     end
 
     def [] key
@@ -88,9 +86,31 @@ module Sinatra
     end
 
     def valid?
-      return false unless app.params['fb_sig']
-      app.env['facebook.valid?'] ||= \
-        app.params['fb_sig'] == Digest::MD5.hexdigest(app.params.map{|k,v| "#{$1}=#{v}" if k =~ /^fb_sig_(.+)$/ }.compact.sort.join+self.secret)
+      if app.params['fb_sig'] # canvas/iframe mode
+        prefix = 'fb_sig'
+        vars = app.params
+      elsif app.request.cookies[api_key] # fbconnect mode
+        prefix = api_key
+        vars = app.request.cookies
+      else
+        return false
+      end
+
+      if app.env['facebook.valid?'].nil?
+        fbvars = {}
+        sig = Digest::MD5.hexdigest(vars.map{|k,v|
+          if k =~ /^#{prefix}_(.+)$/
+            fbvars[$1] = v
+            "#{$1}=#{v}"
+          end
+        }.compact.sort.join+self.secret)
+
+        if app.env['facebook.valid?'] = (vars[prefix] == sig)
+          app.env['facebook.vars'] = fbvars
+        end
+      end
+
+      app.env['facebook.valid?']
     end
 
     class APIProxy
@@ -100,6 +120,7 @@ module Sinatra
         auth
         batch
         comments
+        connect
         data
         events
         fbml
