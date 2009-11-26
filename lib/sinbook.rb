@@ -145,7 +145,7 @@ module Sinatra
 
       alias :__class__ :class
       alias :__inspect__ :inspect
-      instance_methods.each { |m| undef_method m unless m =~ /^__/ }
+      instance_methods.each { |m| undef_method m unless m =~ /^(__|object_id)/ }
       alias :inspect :__inspect__
 
       def initialize name, obj
@@ -338,16 +338,16 @@ module Sinatra
       FacebookSettings.new(self, &blk)
     end
 
+    FixRequestMethod = proc{
+      if method = request.params['fb_sig_request_method']
+        request.env['REQUEST_METHOD'] = method
+      end
+    }
+
     def self.registered app
       app.helpers FacebookHelper
-      app.before(&method(:fix_request_method))
+      app.before(&FixRequestMethod)
       app.disable :sessions
-    end
-
-    def self.fix_request_method app
-      if method = app.request.params['fb_sig_request_method']
-        app.request.env['REQUEST_METHOD'] = method
-      end
     end
   end
 
