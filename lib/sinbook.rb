@@ -269,12 +269,27 @@ module Sinatra
       @socket.print "\r\n\r\n"
 
       buf = ''
+      headers = ''
+      headers_done = false
+      chunked = true
 
       while true
         line = @socket.gets
+        headers << line unless headers_done
         raise Errno::ECONNRESET unless line
 
         if line == "\r\n" # end of headers/chunk
+          unless headers_done
+            headers_done = true
+            if headers =~ /Encoding: chunked/i
+              chunked = true
+            else
+              len = headers[/Content-Length: (\d+)/i,1].to_i
+              buf = @socket.read(len)
+              break # done!
+            end
+          end
+
           line = @socket.gets # get size of next chunk
           if line.strip! == '0' # 0 sized chunk
             @socket.gets # read last crlf
