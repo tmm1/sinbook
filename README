@@ -74,6 +74,28 @@ sinbook: simple sinatra facebook extension in 300 lines of ruby
     => 'hello world'
 
 
+=== Local Development
+
+  To develop locally, use ssh to setup a reverse tunnel to your external server.
+  For example, set your callback url to http://myserver.com:4567/, and run:
+
+    ssh -gNR 4567:localhost:4567 me@myserver.com
+
+  Then, simply launch sinatra on your local machine. Facebook will make requests to
+  http://myserver.com:4567/ which will be forwarded to port 4567 on your local machine.
+
+
+
+=== Other Options
+
+  facebook do
+    symbolize_keys true
+  end
+
+  >> fb.groups.get :uid => 1234
+  => [{:name => 'Sinatra Users'}]
+
+
 === TODO
 
   * Split out facebook api client so it can be used outside sinatra
