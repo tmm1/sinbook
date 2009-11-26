@@ -39,7 +39,7 @@ __END__
       FB.init("#{fb.api_key}", "/receiver")
 
 @@ main
-- if fb.valid? and fb[:user]
+- if fb[:user]
   Hi,
   %fb:profile-pic{:uid => fb[:user]}
   %fb:name{:uid => fb[:user], :useyou => 'false', :firstnameonly => 'true'}
