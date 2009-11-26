@@ -18,6 +18,7 @@ module Sinatra
       @app_id = app.options.facebook_app_id
       @url = app.options.facebook_url
       @callback = app.options.facebook_callback
+      @symbolize_keys = app.options.facebook_symbolize_keys || false
     end
     attr_reader :app
     attr_accessor :api_key, :secret
@@ -217,7 +218,7 @@ module Sinatra
             elsif (n = Integer(ret) rescue nil)
               n
             else
-              Yajl::Parser.parse(ret)
+              Yajl::Parser.parse(ret, :symbolize_keys => @symbolize_keys)
             end
 
       raise Facebook::Error, ret['error_msg'] if ret.is_a? Hash and ret['error_code']
@@ -295,7 +296,7 @@ module Sinatra
       @app = app
       instance_eval &blk
     end
-    %w[ api_key secret app_id url callback ].each do |param|
+    %w[ api_key secret app_id url callback symbolize_keys ].each do |param|
       class_eval %[
         def #{param} val, &blk
           @app.set :facebook_#{param}, val
