@@ -236,7 +236,16 @@ module Sinatra
     @keepalive = false
 
     def self.connect
-      TCPSocket.new(API_SERVER, 80)
+      sock = TCPSocket.new(API_SERVER, 80)
+      begin
+        timeout = [3,0].pack('l_2') # 3 seconds
+        sock.setsockopt Socket::SOL_SOCKET, Socket::SO_RCVTIMEO, timeout
+        sock.setsockopt Socket::SOL_SOCKET, Socket::SO_SNDTIMEO, timeout
+      rescue Exception => ex
+        # causes issues on solaris?
+        puts ex.inspect
+      end
+      sock
     end
 
     def self.request data, mime=false
