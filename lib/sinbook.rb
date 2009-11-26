@@ -136,6 +136,7 @@ module Sinatra
         pages
         photos
         profile
+        sms
         status
         stream
         users
