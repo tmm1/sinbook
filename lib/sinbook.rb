@@ -319,6 +319,7 @@ module Sinatra
   class FacebookSettings
     def initialize app, &blk
       @app = app
+      @app.set :facebook_symbolize_keys, false
       instance_eval &blk
     end
     %w[ api_key secret app_id url callback symbolize_keys ].each do |param|
