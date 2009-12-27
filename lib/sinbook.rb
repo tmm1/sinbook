@@ -5,6 +5,10 @@ rescue LoadError
   raise
 end
 
+class FacebookError < StandardError
+  attr_accessor :data
+end
+
 module Sinatra
   require 'digest/md5'
   require 'yajl'
@@ -222,7 +226,11 @@ module Sinatra
               Yajl::Parser.parse(ret, :symbolize_keys => @symbolize_keys)
             end
 
-      raise Facebook::Error, ret['error_msg'] if ret.is_a? Hash and ret['error_code']
+      if ret.is_a?(Hash) and (ret['error_code'] or ret[:error_code])
+        err = FacebookError.new(ret['error_msg'] || ret[:error_msg])
+        err.data = ret
+        raise err
+      end
 
       ret
     end
@@ -332,8 +340,6 @@ module Sinatra
   end
 
   module Facebook
-    class Error < StandardError; end
-
     def facebook &blk
       FacebookSettings.new(self, &blk)
     end
