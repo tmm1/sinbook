@@ -93,7 +93,7 @@ module Sinatra
     def valid?
       if app.params['fb_sig'] # canvas/iframe mode
         prefix = 'fb_sig'
-        vars = app.params
+        vars = app.request.POST[prefix] ? app.request.POST : app.request.GET
       elsif app.request.cookies[api_key] # fbconnect mode
         prefix = api_key
         vars = app.request.cookies
