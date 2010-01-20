@@ -240,11 +240,10 @@ module Sinatra
     MimeImage = %[Content-Disposition: form-data; filename="%s"\r\nContent-Type: image/%s\r\n\r\n%s\r\n] + MimeBoundary
 
     require 'resolv'
-    API_SERVER = Resolv.getaddress('api.facebook.com')
     @keepalive = false
 
     def self.connect
-      sock = TCPSocket.new(API_SERVER, 80)
+      sock = TCPSocket.new(@api_server_ip ||= Resolv.getaddress('api.facebook.com'), 80)
       begin
         timeout = [3,0].pack('l_2') # 3 seconds
         sock.setsockopt Socket::SOL_SOCKET, Socket::SO_RCVTIMEO, timeout
