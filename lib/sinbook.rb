@@ -353,7 +353,6 @@ module Sinatra
     def self.registered app
       app.helpers FacebookHelper
       app.before(&FixRequestMethod)
-      app.disable :sessions
     end
   end
 
