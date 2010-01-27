@@ -94,6 +94,18 @@ sinbook: simple sinatra facebook extension in 300 lines of ruby
   Then, simply launch sinatra on your local machine. Facebook will make requests to
   http://myserver.com:4567/ which will be forwarded to port 4567 on your local machine.
 
+  For facebook connect, I generally add a CNAME on my domain for fb.myserver.com, and setup
+  nginx on my server with the following:
+
+    server {
+      server_name fb.myserver.com;
+      location / {
+        proxy_pass http://localhost:4567;
+      }
+    }
+
+  Make sure your connect url is set to 'http://myserver.com' and the base domain is set to 'myserver.com',
+  so that the fb.myserver.com subdomain works.
 
 === TODO
 
