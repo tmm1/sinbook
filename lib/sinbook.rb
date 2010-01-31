@@ -66,7 +66,11 @@ module Sinatra
 
     def redirect url
       url = self.url + url unless url =~ /^http/
-      app.body "<fb:redirect url='#{url}'/>"
+      if params[:in_iframe]
+        app.body "<script type=\"text/javascript\">top.location.href=\"#{url}\"</script>"
+      else
+        app.body "<fb:redirect url='#{url}'/>"
+      end
       throw :halt
     end
 
