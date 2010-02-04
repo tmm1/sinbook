@@ -84,6 +84,19 @@ sinbook: simple sinatra facebook extension in 300 lines of ruby
   => [{:name => 'Sinatra Users'}]
 
 
+=== Standalone Usage
+
+  require 'sinbook'
+  fb = Sinbook.new(
+    :api_key  => '4579...cbb0',
+    :secret   => '5106...2342',
+    :app_id   => 81747826609
+  )
+
+  >> fb.friends.get :uid => 1234, :session_key => 'user-session-key'
+  => [4321,4567,9876]
+
+
 === Local Development
 
   To develop locally, use ssh to setup a reverse tunnel to your external server.
@@ -109,7 +122,6 @@ sinbook: simple sinatra facebook extension in 300 lines of ruby
 
 === TODO
 
-  * Split out facebook api client so it can be used outside sinatra
   * Add a batch mode for api calls:
 
       groups, pics = fb.batch do |b|

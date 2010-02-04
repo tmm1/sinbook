@@ -15,15 +15,23 @@ module Sinatra
 
   class FacebookObject
     def initialize app
-      @app = app
+      if app.respond_to?(:options)
+        @app = app
 
-      @api_key = app.options.facebook_api_key
-      @secret = app.options.facebook_secret
-      @app_id = app.options.facebook_app_id
-      @url = app.options.facebook_url
-      @callback = app.options.facebook_callback
-      @symbolize_keys = app.options.facebook_symbolize_keys || false
+        [ :api_key, :secret, :app_id, :url, :callback, :symbolize_keys ].each do |var|
+          instance_variable_set("@#{var}", app.options.send("facebook_#{var}"))
+        end
+      else
+        [ :api_key, :secret, :app_id ].each do |var|
+          raise ArgumentError, "missing option #{var}" unless app[var]
+          instance_variable_set("@#{var}", app[var])
+        end
+        [:url, :callback, :symbolize_keys ].each do |var|
+          instance_variable_set("@#{var}", app[var]) if app.has_key?(var)
+        end
+      end
     end
+
     attr_reader :app
     attr_accessor :api_key, :secret
     attr_writer :url, :callback, :app_id
@@ -91,7 +99,9 @@ module Sinatra
     end
 
     def valid?
-      if app.params['fb_sig'] # canvas/iframe mode
+      if app.nil?
+        return false
+      elsif app.params['fb_sig'] # canvas/iframe mode
         prefix = 'fb_sig'
         vars = app.request.POST[prefix] ? app.request.POST : app.request.GET
       elsif app.request.cookies[api_key] # fbconnect mode
@@ -357,3 +367,5 @@ module Sinatra
 
   Application.register Facebook
 end
+
+Sinbook = Sinatra::FacebookObject
