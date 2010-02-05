@@ -1,7 +1,7 @@
 spec = Gem::Specification.new do |s|
   s.name = 'sinbook'
-  s.version = '0.1.8'
-  s.date = '2009-12-27'
+  s.version = '0.1.9'
+  s.date = '2010-02-04'
   s.summary = 'simple sinatra facebook extension in 300 lines of ruby'
   s.description = 'A full-featured facebook extension for the sinatra webapp framework'
 
