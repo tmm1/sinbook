@@ -97,6 +97,18 @@ sinbook: simple sinatra facebook extension in 300 lines of ruby
   => [4321,4567,9876]
 
 
+=== Use with Rails3
+
+  require 'rails/facebook'
+
+  class ApplicationController < ActionController::Base
+    facebook do
+      api_key '4579...cbb0'
+      secret  '5106...2342'
+    end
+  end
+
+
 === Use with Rack
 
   require 'sinbook/middleware'
