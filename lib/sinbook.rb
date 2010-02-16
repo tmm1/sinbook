@@ -161,7 +161,7 @@ class Sinbook
     end
 
     def method_missing method, opts = {}
-      @obj.request "#{@name}.#{method}", opts
+      @obj.call "#{@name}.#{method}", opts
     end
   end
 
@@ -173,7 +173,7 @@ class Sinbook
     ]
   end
 
-  def request method, opts = {}
+  def call method, opts = {}
     if method == 'photos.upload'
       image = opts.delete :image
     end
