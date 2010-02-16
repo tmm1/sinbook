@@ -1,5 +1,5 @@
 require 'rubygems'
-require 'sinbook'
+require 'sinatra/facebook'
 require 'sinatra'
 
 facebook do
