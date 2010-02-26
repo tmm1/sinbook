@@ -76,7 +76,7 @@ class Sinbook
           h[s] = Time.at(v.to_f)
         when 'expires'
           v = v.to_i
-          h[s] = v>0 ? Time.at(v) : v
+          h[s] = v>0 ? Time.at(v) : false
         when 'user', 'app_id', 'canvas_user'
           h[s] = v.to_i
         when /^(logged_out|position_|in_|is_|added)/
